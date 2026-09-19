@@ -57,10 +57,10 @@ try {
     const password = email && (cfg.pg_password || await prompt({ type: 'password', message: 'Enter password' }));
     if (email && password) {
       await page.locator(PRIME_LOGIN_SELECTORS.email).fill(email);
-      await page.locator(PRIME_LOGIN_SELECTORS.submit).click();
+      await page.locator(PRIME_LOGIN_SELECTORS.emailSubmit).click();
       await page.locator(PRIME_LOGIN_SELECTORS.password).fill(password);
       // await page.check('[name=rememberMe]'); // no longer exists
-      await page.locator(PRIME_LOGIN_SELECTORS.submit).click();
+      await page.locator(PRIME_LOGIN_SELECTORS.passwordSubmit).click();
       page.waitForURL('**/ap/signin**').then(async () => { // check for wrong credentials
         const error = await page.locator('.a-alert-content').first().innerText();
         if (!error.trim.length) return;

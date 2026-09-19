@@ -3,11 +3,12 @@ import test from 'node:test';
 
 import { GOG_LOGIN_SELECTORS, PRIME_LOGIN_SELECTORS } from '../src/storefront-selectors.js';
 
-test('Prime login ignores Amazon hidden email claims', () => {
-  assert.match(PRIME_LOGIN_SELECTORS.email, /:not\(\[type="hidden"\]\)/);
-  assert.match(PRIME_LOGIN_SELECTORS.email, /:visible$/);
-  assert.match(PRIME_LOGIN_SELECTORS.password, /:visible$/);
-  assert.match(PRIME_LOGIN_SELECTORS.submit, /:visible$/);
+test('Prime login targets Amazon credential controls by unique IDs', () => {
+  assert.equal(PRIME_LOGIN_SELECTORS.email, '#ap_email');
+  assert.equal(PRIME_LOGIN_SELECTORS.emailSubmit, '#continue');
+  assert.equal(PRIME_LOGIN_SELECTORS.password, '#ap_password');
+  assert.equal(PRIME_LOGIN_SELECTORS.passwordSubmit, '#signInSubmit');
+  assert.notEqual(PRIME_LOGIN_SELECTORS.email, '[name=email]');
 });
 
 test('GOG auth state targets the current desktop menu controls without nth selectors', () => {
