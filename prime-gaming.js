@@ -56,8 +56,12 @@ try {
     const email = cfg.pg_email || await prompt({ message: 'Enter email' });
     const password = email && (cfg.pg_password || await prompt({ type: 'password', message: 'Enter password' }));
     if (email && password) {
-      await page.locator(PRIME_LOGIN_SELECTORS.email).fill(email);
-      await page.locator(PRIME_LOGIN_SELECTORS.emailSubmit).click();
+      const emailInput = page.locator(PRIME_LOGIN_SELECTORS.email);
+      // Amazon skips the email step when its account chooser remembers the account.
+      if (await emailInput.isVisible()) {
+        await emailInput.fill(email);
+        await page.locator(PRIME_LOGIN_SELECTORS.emailSubmit).click();
+      }
       await page.locator(PRIME_LOGIN_SELECTORS.password).fill(password);
       // await page.check('[name=rememberMe]'); // no longer exists
       await page.locator(PRIME_LOGIN_SELECTORS.passwordSubmit).click();
