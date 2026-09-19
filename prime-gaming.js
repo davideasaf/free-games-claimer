@@ -4,6 +4,7 @@ import { authenticator } from 'otplib';
 import chalk from 'chalk';
 import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
+import { PRIME_LOGIN_SELECTORS } from './src/storefront-selectors.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'prime-gaming', ...a);
 
@@ -55,11 +56,11 @@ try {
     const email = cfg.pg_email || await prompt({ message: 'Enter email' });
     const password = email && (cfg.pg_password || await prompt({ type: 'password', message: 'Enter password' }));
     if (email && password) {
-      await page.fill('[name=email]', email);
-      await page.click('input[type="submit"]');
-      await page.fill('[name=password]', password);
+      await page.locator(PRIME_LOGIN_SELECTORS.email).fill(email);
+      await page.locator(PRIME_LOGIN_SELECTORS.submit).click();
+      await page.locator(PRIME_LOGIN_SELECTORS.password).fill(password);
       // await page.check('[name=rememberMe]'); // no longer exists
-      await page.click('input[type="submit"]');
+      await page.locator(PRIME_LOGIN_SELECTORS.submit).click();
       page.waitForURL('**/ap/signin**').then(async () => { // check for wrong credentials
         const error = await page.locator('.a-alert-content').first().innerText();
         if (!error.trim.length) return;

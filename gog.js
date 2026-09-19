@@ -3,6 +3,7 @@ import { chromium } from 'patchright';
 import chalk from 'chalk';
 import { resolve, jsonDb, datetime, filenamify, prompt, confirm, notify, html_game_list, handleSIGINT } from './src/util.js';
 import { cfg } from './src/config.js';
+import { GOG_LOGIN_SELECTORS } from './src/storefront-selectors.js';
 
 const screenshot = (...a) => resolve(cfg.dir.screenshots, 'gog', ...a);
 
@@ -48,11 +49,11 @@ try {
   await page.goto(URL_CLAIM, { waitUntil: 'domcontentloaded' }); // default 'load' takes forever
 
   // page.click('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll').catch(_ => { }); // does not work reliably, solved by setting CookieConsent above
-  const signIn = page.locator('a:has-text("Sign in")').first();
-  // TODO for the below signIn.waitFor(), patchright failed most of the time with: locator.waitFor: JSHandles can be evaluated only in the context they were created!
-  // await Promise.any([signIn.waitFor(), page.waitForSelector('#menuUsername')]);
-  const username = page.locator('#menuUsername').first();
-  while (await signIn.isVisible() && !await username.isVisible()) {
+  await page.waitForFunction(({ anonymous, account }) => document.querySelector(anonymous) || document.querySelector(account),
+    GOG_LOGIN_SELECTORS);
+  const signIn = page.locator(`${GOG_LOGIN_SELECTORS.anonymous}:visible`);
+  const account = page.locator(GOG_LOGIN_SELECTORS.account);
+  while (await signIn.count() > 0 && await account.count() === 0) {
     console.error('Not signed!');
     if (cfg.nowait) process.exit(1);
     await signIn.click();
@@ -90,7 +91,7 @@ try {
         notify('gog: got captcha during login. Please check.');
         // TODO solve reCAPTCHA?
       }).catch(_ => { });
-      await page.waitForSelector('#menuUsername');
+      await account.waitFor({ state: 'attached' });
     } else {
       console.log('Waiting for you to login in the browser.');
       await notify('gog: no longer signed in and not enough options set for automatic login.');
@@ -100,10 +101,13 @@ try {
         process.exit(1);
       }
     }
-    await page.waitForSelector('#menuUsername');
+    await account.waitFor({ state: 'attached' });
     if (!cfg.debug) context.setDefaultTimeout(cfg.timeout);
   }
-  user = await page.locator('#menuUsername').first().textContent(); // innerText is uppercase due to styling!
+  const username = page.locator(GOG_LOGIN_SELECTORS.username);
+  await page.waitForFunction(selector => document.querySelector(selector)?.textContent.trim(),
+    GOG_LOGIN_SELECTORS.username);
+  user = (await username.textContent()).trim(); // innerText is uppercase due to styling!
   console.log(`Signed in as ${user}`);
   db.data[user] ||= {};
 
